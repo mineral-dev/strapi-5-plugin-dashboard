@@ -1,1 +1,4 @@
-{}
+{
+  "plugin.name": "Dashboard",
+  "plugin.description": "A Strapi plugin for visualizing data and analytics"
+}
