@@ -37,7 +37,7 @@ const index = {
         defaultMessage: "Dashboard"
       },
       Component: async () => {
-        const { App } = await Promise.resolve().then(() => require("../_chunks/App-CLteGWJJ.js"));
+        const { App } = await Promise.resolve().then(() => require("../_chunks/App-BjMGP076.js"));
         return App;
       }
     });
