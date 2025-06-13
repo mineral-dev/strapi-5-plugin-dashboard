@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run linter
+      run: npm run verify || true
+
+    - name: Run unit tests
+      run: npm test
+
+    - name: Generate test coverage
+      run: npm run test:coverage
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage/lcov.info
+        fail_ci_if_error: false
+
+    - name: Build plugin
+      run: npm run build
+
+    - name: Verify build output
+      run: |
+        if [ ! -d "dist" ]; then
+          echo "Build failed: dist directory not found"
+          exit 1
+        fi
+        if [ ! -f "dist/admin/index.js" ]; then
+          echo "Build failed: admin bundle not found"
+          exit 1
+        fi
+        if [ ! -f "dist/server/index.js" ]; then
+          echo "Build failed: server bundle not found"
+          exit 1
+        fi
+        echo "Build successful!"
+
+    - name: Archive build artifacts
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist-${{ matrix.node-version }}
+        path: dist/
+        retention-days: 7
+
+  code-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Check code formatting
+      run: npx prettier --check "**/*.{js,jsx,json,md}"
+
+    - name: Run ESLint (if configured)
+      run: npx eslint . --ext .js,.jsx || echo "ESLint not configured"
+
+  security-audit:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Run npm audit
+      run: npm audit --audit-level=moderate || true
+
+    - name: Check for known vulnerabilities
+      run: npx audit-ci --moderate || echo "Some vulnerabilities found"
