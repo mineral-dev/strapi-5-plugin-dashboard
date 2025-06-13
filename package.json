@@ -25,16 +25,16 @@
     "dist"
   ],
   "scripts": {
-    "build": "strapi-plugin build",
-    "watch": "strapi-plugin watch",
-    "watch:link": "strapi-plugin watch:link",
-    "verify": "strapi-plugin verify",
     "test": "jest",
-    "test:watch": "jest --watch",
+    "test:watch": "jest --watch", 
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --maxWorkers=2",
     "test:build": "node scripts/test-build.js",
-    "test:all": "npm test && npm run test:build"
+    "test:all": "npm test && npm run test:build",
+    "build": "npm run test && strapi-plugin build",
+    "watch": "strapi-plugin watch",
+    "watch:link": "strapi-plugin watch:link",
+    "verify": "strapi-plugin verify"
   },
   "dependencies": {
     "@faker-js/faker": "^9.8.0",
