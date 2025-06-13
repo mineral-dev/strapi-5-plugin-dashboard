@@ -1,5 +1,9 @@
 {
+  "name": "strapi-5-plugin-dashboard",
   "version": "0.0.0",
+  "description": "",
+  "license": "MIT",
+  "author": "Zulfa Nafi <zul@mineral.co.id>",
   "keywords": [],
   "type": "commonjs",
   "exports": {
@@ -31,6 +35,8 @@
     "@strapi/design-system": "^2.0.0-rc.23",
     "@strapi/icons": "^2.0.0-rc.23",
     "chart.js": "^4.4.9",
+    "currency-formatter": "^1.5.9",
+    "dayjs": "^1.11.13",
     "faker": "^6.6.6",
     "react-chartjs-2": "^5.3.0",
     "react-intl": "^7.1.11",
@@ -55,12 +61,8 @@
   },
   "strapi": {
     "kind": "plugin",
-    "name": "strapi-5-dashboard",
+    "name": "strapi-5-plugin-dashboard",
     "displayName": "Dashboard",
     "description": ""
-  },
-  "name": "strapi-5-dashboard",
-  "description": "",
-  "license": "MIT",
-  "author": "Zulfa Nafi <zul@mineral.co.id>"
+  }
 }

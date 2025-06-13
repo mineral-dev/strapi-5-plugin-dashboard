@@ -1,1 +1,1 @@
-# strapi-5-dashboard
+# strapi-5-plugin-dashboard

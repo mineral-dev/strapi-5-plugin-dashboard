@@ -48,7 +48,7 @@ const HomePage = () => {
   const fetchApi = async (start, end) => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/strapi-5-dashboard/chart?start=${start}&end=${end}`)
+      const response = await fetch(`/api/strapi-5-plugin-dashboard/chart?start=${start}&end=${end}`)
       const responseJson = await response.json()
       if(responseJson){
         setChart(responseJson.chart)
@@ -68,7 +68,7 @@ const HomePage = () => {
   const fetchOrder = async () => {
     setLoadingOrders(true)
     try {
-      const response = await fetch("/api/strapi-5-dashboard/orders")
+      const response = await fetch("/api/strapi-5-plugin-dashboard/orders")
       const result = await response.json()
 
       if(result){
@@ -95,7 +95,7 @@ const HomePage = () => {
 
   const handleExport = useCallback(async () => {
     try {
-      const response = await fetch("/api/strapi-5-dashboard/export-orders", {
+      const response = await fetch("/api/strapi-5-plugin-dashboard/export-orders", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

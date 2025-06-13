@@ -4,7 +4,7 @@ const fs = require('fs');
 const controller = ({ strapi }) => ({
   index(ctx) {
     ctx.body = strapi
-      .plugin('strapi-5-dashboard')
+      .plugin('strapi-5-plugin-dashboard')
       // the name of the service file & the method.
       .service('service')
       .getWelcomeMessage();
@@ -13,7 +13,7 @@ const controller = ({ strapi }) => ({
     const { start, end } = ctx.request.query
     try {
       ctx.body = await strapi
-        .plugin('strapi-5-dashboard')
+        .plugin('strapi-5-plugin-dashboard')
         .service('service')
         .getChart({ start, end });
     } catch (error) {
@@ -24,7 +24,7 @@ const controller = ({ strapi }) => ({
     const { start, end } = ctx.request.body
     try {
       const entry_order = await strapi
-        .plugin('strapi-5-dashboard')
+        .plugin('strapi-5-plugin-dashboard')
         .service('service')
         .exportOrders({ start, end });
       console.log(entry_order)
