@@ -59,7 +59,7 @@
     "kind": "plugin",
     "name": "strapi-5-plugin-dashboard",
     "displayName": "Dashboard",
-    "description": ""
+    "description": "A Strapi plugin for visualizing data and analytics"
   },
   "name": "strapi-5-plugin-dashboard",
   "description": "",
