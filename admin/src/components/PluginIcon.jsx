@@ -1,5 +1,5 @@
-import { Coffee } from '@strapi/icons';
+import { ChartPie } from '@strapi/icons';
 
-const PluginIcon = () => <Coffee />;
+const PluginIcon = () => <ChartPie />;
 
 export { PluginIcon };
