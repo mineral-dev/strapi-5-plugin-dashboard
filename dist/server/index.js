@@ -52,7 +52,7 @@ const controller = ({ strapi }) => ({
         sort: "createdAt:desc",
         limit: 10,
         start: 0,
-        fields: ["order_id", "status", "createdAt"]
+        fields: ["order_id", "order_status", "createdAt"]
       });
     } catch (error) {
       ctx.send({ message: error.message }, 500);
@@ -191,7 +191,7 @@ const service = ({ strapi }) => ({
                 createdAt: { $between: date_time }
               },
               {
-                status: { $eq: 0 }
+                order_status: { $eq: 0 }
               }
             ]
           }
@@ -203,7 +203,7 @@ const service = ({ strapi }) => ({
                 createdAt: { $between: date_time }
               },
               {
-                status: { $eq: 1 }
+                order_status: { $eq: 1 }
               }
             ]
           }
@@ -215,7 +215,7 @@ const service = ({ strapi }) => ({
                 createdAt: { $between: date_time }
               },
               {
-                status: { $eq: 4 }
+                order_status: { $eq: 4 }
               }
             ]
           }
@@ -227,7 +227,7 @@ const service = ({ strapi }) => ({
                 createdAt: { $between: date_time }
               },
               {
-                status: { $eq: 1 }
+                order_status: { $eq: 1 }
               }
             ]
           }
@@ -256,7 +256,7 @@ const service = ({ strapi }) => ({
               createdAt: { $between: [startDate, endDate] }
             },
             {
-              status: { $eq: 1 }
+              order_status: { $eq: 1 }
             }
           ]
         }
@@ -268,7 +268,7 @@ const service = ({ strapi }) => ({
               createdAt: { $between: [startDate, endDate] }
             },
             {
-              status: { $eq: 0 }
+              order_status: { $eq: 0 }
             }
           ]
         }
@@ -280,7 +280,7 @@ const service = ({ strapi }) => ({
               createdAt: { $between: [startDate, endDate] }
             },
             {
-              status: { $eq: 4 }
+              order_status: { $eq: 4 }
             }
           ]
         }
@@ -292,7 +292,7 @@ const service = ({ strapi }) => ({
               createdAt: { $between: [startDate, endDate] }
             },
             {
-              status: { $eq: 1 }
+              order_status: { $eq: 1 }
             }
           ]
         }
@@ -334,7 +334,7 @@ const service = ({ strapi }) => ({
             orders.push({
               order_id: order.order_id,
               uuid: order.uuid,
-              status: getStatus(order.status),
+              order_status: getStatus(order.order_status),
               name: order.name,
               email: order.email,
               address: order.address,

@@ -47,7 +47,7 @@ const controller = ({ strapi }) => ({
         sort: "createdAt:desc",
         limit: 10,
         start: 0,
-        fields: ["order_id", "status", "createdAt"]
+        fields: ["order_id", "order_status", "createdAt"]
       })
     } catch (error) {
       ctx.send({ message: error.message }, 500)
