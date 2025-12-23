@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import { jsx } from "react/jsx-runtime";
-import { Coffee } from "@strapi/icons";
+import { ChartPie } from "@strapi/icons";
 const __variableDynamicImportRuntimeHelper = (glob, path, segs) => {
   const v = glob[path];
   if (v) {
@@ -25,7 +25,7 @@ const Initializer = ({ setPlugin }) => {
   }, []);
   return null;
 };
-const PluginIcon = () => /* @__PURE__ */ jsx(Coffee, {});
+const PluginIcon = () => /* @__PURE__ */ jsx(ChartPie, {});
 const index = {
   register(app) {
     app.addMenuLink({
@@ -36,7 +36,7 @@ const index = {
         defaultMessage: "Dashboard"
       },
       Component: async () => {
-        const { App } = await import("../_chunks/App-CuSKCu4N.mjs");
+        const { App } = await import("../_chunks/App-CyxVTpZ4.mjs");
         return App;
       }
     });
@@ -63,3 +63,4 @@ const index = {
 export {
   index as default
 };
+//# sourceMappingURL=index.mjs.map

@@ -26,7 +26,7 @@ const Initializer = ({ setPlugin }) => {
   }, []);
   return null;
 };
-const PluginIcon = () => /* @__PURE__ */ jsxRuntime.jsx(icons.Coffee, {});
+const PluginIcon = () => /* @__PURE__ */ jsxRuntime.jsx(icons.ChartPie, {});
 const index = {
   register(app) {
     app.addMenuLink({
@@ -37,7 +37,7 @@ const index = {
         defaultMessage: "Dashboard"
       },
       Component: async () => {
-        const { App } = await Promise.resolve().then(() => require("../_chunks/App-BjMGP076.js"));
+        const { App } = await Promise.resolve().then(() => require("../_chunks/App-CbH_ADgV.js"));
         return App;
       }
     });
@@ -62,3 +62,4 @@ const index = {
   }
 };
 module.exports = index;
+//# sourceMappingURL=index.js.map

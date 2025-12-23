@@ -11,12 +11,17 @@ import {
   PointElement,
   Tooltip,
 } from 'chart.js';
+
 import dayjs from "dayjs";
+import utc from 'dayjs/plugin/utc';
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { Chart } from 'react-chartjs-2';
 import { useIntl } from 'react-intl';
 import OrderItem from '../components/Order';
 import money from '../utils/money';
+
+dayjs.extend(utc)
 
 ChartJS.register(
   LinearScale,
@@ -33,8 +38,8 @@ ChartJS.register(
 
 const HomePage = () => {
   const { formatMessage } = useIntl();
-  const [ startDate, setStartDate ] = useState(dayjs().subtract(7, 'day'))
-  const [ endDate, setEndDate ] = useState(dayjs())
+  const [ startDate, setStartDate ] = useState(dayjs().subtract(7, 'day').startOf("day").toDate())
+  const [ endDate, setEndDate ] = useState(dayjs().endOf("day").toDate())
   const [ chart, setChart ] = useState(null)
   const [ sales, setSales ] = useState(0)
   const [ countOrder, setCountOrder ] = useState(0)
@@ -81,16 +86,31 @@ const HomePage = () => {
     }
   }
   
+  const normalizeDate = (date) => {
+    if (!date) return null;
+
+    return dayjs(date)
+      .hour(12)
+      .minute(0)
+      .second(0)
+      .millisecond(0)
+      .toDate();
+  };
+
   const handleStart = (value) => {
-    setStartDate(dayjs(value))
+    setStartDate(normalizeDate(value))
   }
 
   const handleEnd = (value) => {
-    setEndDate(dayjs(value))
+    setEndDate(normalizeDate(value))
   }
 
+  const toStartOfDayISO = (date) => dayjs(date).startOf("day").toISOString();
+
+  const toEndOfDayISO = (date) => dayjs(date).endOf("day").toISOString();
+
   const handleApply = useCallback(() => {
-    fetchApi(startDate.toISOString(), endDate.toISOString())
+    fetchApi(toStartOfDayISO(startDate), toEndOfDayISO(endDate))
   },[ startDate, endDate])
 
   const handleExport = useCallback(async () => {
