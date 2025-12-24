@@ -362,6 +362,7 @@ const service = ({ strapi }) => ({
               insurance_amount: order.insurance_amount,
               promo_code: order.promo_code,
               discount: order.discount,
+              paid_at: order.paid_at ? dayjs__default.default(order.paid_at).format("YYYY-MM-DD HH:mm:ss") : "",
               total: order.total,
               grand_total: order.grand_total
             });
