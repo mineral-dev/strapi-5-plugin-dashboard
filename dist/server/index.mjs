@@ -27,9 +27,9 @@ const controller = ({ strapi }) => ({
     }
   },
   async ExportController(ctx) {
-    const { start, end } = ctx.request.body;
+    const { start, end, status } = ctx.request.body;
     try {
-      const entry_order = await strapi.plugin("strapi-5-plugin-dashboard").service("service").exportOrders({ start, end });
+      const entry_order = await strapi.plugin("strapi-5-plugin-dashboard").service("service").exportOrders({ start, end, status: status == "all" ? null : status });
       const worksheet = XLSX.utils.json_to_sheet(entry_order);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Order");
@@ -117,6 +117,7 @@ const service = ({ strapi }) => ({
     let countOrders = 0;
     let countOrdersPaid = 0;
     let countOrdersPending = 0;
+    let countOrdersShipped = 0;
     let countOrdersExpired = 0;
     let currentDate = startDate;
     while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, "day")) {
@@ -128,6 +129,7 @@ const service = ({ strapi }) => ({
     let count_orders_day = [];
     let count_orders_paid_day = [];
     let count_orders_pending_day = [];
+    let count_orders_shipped_day = [];
     let count_orders_expired_day = [];
     let result = {
       labels: dates,
@@ -162,6 +164,13 @@ const service = ({ strapi }) => ({
           yAxisID: "y1",
           backgroundColor: "rgb(0, 200, 100)",
           data: count_orders_paid_day
+        },
+        {
+          type: "bar",
+          label: "Order Shipped",
+          yAxisID: "y1",
+          backgroundColor: "rgb(67, 0, 200)",
+          data: count_orders_shipped_day
         },
         {
           type: "bar",
@@ -203,6 +212,18 @@ const service = ({ strapi }) => ({
             ]
           }
         });
+        const order_shipped_count = await strapi.documents("api::order.order").count({
+          filters: {
+            $and: [
+              {
+                createdAt: { $between: date_time }
+              },
+              {
+                order_status: { $eq: 2 }
+              }
+            ]
+          }
+        });
         const order_expired_count = await strapi.documents("api::order.order").count({
           filters: {
             $and: [
@@ -230,9 +251,9 @@ const service = ({ strapi }) => ({
         count_orders_day.push(order_count);
         count_orders_pending_day.push(order_pending_count);
         count_orders_paid_day.push(order_paid_count);
+        count_orders_shipped_day.push(order_shipped_count);
         count_orders_expired_day.push(order_expired_count);
         const grandTotal = Array.isArray(order_sales) && order_sales.length > 0 ? order_sales.reduce((sum, item) => sum + item.grand_total, 0) : 0;
-        console.log(grandTotal);
         count_sales_day.push(grandTotal);
       } catch (error) {
         console.log(error.message, " | err order day");
@@ -268,6 +289,18 @@ const service = ({ strapi }) => ({
           ]
         }
       });
+      const order_shipped_count = await strapi.documents("api::order.order").count({
+        filters: {
+          $and: [
+            {
+              createdAt: { $between: [startDate, endDate] }
+            },
+            {
+              order_status: { $eq: 2 }
+            }
+          ]
+        }
+      });
       const order_expired_count = await strapi.documents("api::order.order").count({
         filters: {
           $and: [
@@ -295,6 +328,7 @@ const service = ({ strapi }) => ({
       countOrders = order_count;
       countOrdersPending = order_pending_count;
       countOrdersPaid = order_paid_count;
+      countOrdersShipped = order_shipped_count;
       countOrdersExpired = order_expired_count;
       sales = Array.isArray(order_sales) && order_sales.length > 0 ? order_sales.reduce((sum, item) => sum + item.grand_total, 0) : 0;
     } catch (error) {
@@ -304,20 +338,25 @@ const service = ({ strapi }) => ({
       sales,
       orders: countOrders,
       orders_paid: countOrdersPaid,
+      orders_shipped: countOrdersShipped,
       orders_pending: countOrdersPending,
       orders_expired: countOrdersExpired,
       chart: result
     };
   },
-  async exportOrders({ start, end }) {
+  async exportOrders({ start, end, status }) {
     const startDate = dayjs(start).startOf("day");
     const endDate = dayjs(end).endOf("day");
     const orders = [];
+    const filters = {
+      createdAt: { $between: [startDate, endDate] }
+    };
+    if (status) {
+      filters.order_status = { $eq: Number(status) };
+    }
     try {
       const entry_order = await strapi.documents("api::order.order").findMany({
-        filters: {
-          createdAt: { $between: [startDate, endDate] }
-        },
+        filters,
         populate: {
           order_item: true
         }

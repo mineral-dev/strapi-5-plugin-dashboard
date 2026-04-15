@@ -21,12 +21,12 @@ const controller = ({ strapi }) => ({
     }
   },
   async ExportController(ctx) {
-    const { start, end } = ctx.request.body
+    const { start, end, status } = ctx.request.body
     try {
       const entry_order = await strapi
         .plugin('strapi-5-plugin-dashboard')
         .service('service')
-        .exportOrders({ start, end });
+        .exportOrders({ start, end, status: status == "all" ? null : status });
       // console.log(entry_order)
       const worksheet = XLSX.utils.json_to_sheet(entry_order);
       const workbook = XLSX.utils.book_new();

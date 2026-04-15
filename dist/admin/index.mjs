@@ -36,7 +36,7 @@ const index = {
         defaultMessage: "Dashboard"
       },
       Component: async () => {
-        const { App } = await import("../_chunks/App-CyxVTpZ4.mjs");
+        const { App } = await import("../_chunks/App-OP3XItDS.mjs");
         return App;
       }
     });

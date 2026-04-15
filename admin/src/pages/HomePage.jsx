@@ -1,4 +1,4 @@
-import { Box, Button, Card, CardBody, CardContent, CardHeader, CardTitle, DatePicker, Field, Flex, Grid, Main, Typography } from '@strapi/design-system';
+import { Box, Button, Card, CardBody, CardContent, CardHeader, CardTitle, DatePicker, Field, Flex, Grid, Main, Typography, SingleSelect, SingleSelectOption } from '@strapi/design-system';
 import {
   BarController,
   BarElement,
@@ -40,11 +40,13 @@ const HomePage = () => {
   const { formatMessage } = useIntl();
   const [ startDate, setStartDate ] = useState(dayjs().subtract(7, 'day').startOf("day").toDate())
   const [ endDate, setEndDate ] = useState(dayjs().endOf("day").toDate())
+  const [ status, setStatus ] = useState("all")
   const [ chart, setChart ] = useState(null)
   const [ sales, setSales ] = useState(0)
   const [ countOrder, setCountOrder ] = useState(0)
   const [ countPaidOrder, setCountPaidOrder ] = useState(0)
   const [ countPendingOrder, setCountPendingOrder ] = useState(0)
+  const [ countShippedOrder, setCountShippedOrder ] = useState(0)
   const [ countExpiredOrder, setCountExpiredOrder ] = useState(0)
   const [ loading, setLoading ] = useState(false)
   const [ loadingOrders, setLoadingOrders ] = useState(false)
@@ -55,11 +57,13 @@ const HomePage = () => {
     try {
       const response = await fetch(`/api/strapi-5-plugin-dashboard/chart?start=${start}&end=${end}`)
       const responseJson = await response.json()
+
       if(responseJson){
         setChart(responseJson.chart)
         setCountOrder(responseJson.orders)
         setCountPaidOrder(responseJson.orders_paid)
         setCountPendingOrder(responseJson.orders_pending)
+        setCountShippedOrder(responseJson.orders_shipped)
         setCountExpiredOrder(responseJson.orders_expired)
         setSales(responseJson.sales)
         setLoading(false)
@@ -105,6 +109,10 @@ const HomePage = () => {
     setEndDate(normalizeDate(value))
   }
 
+  const handleStatus = (value) => {
+    setStatus(value)
+  }
+
   const toStartOfDayISO = (date) => dayjs(date).startOf("day").toISOString();
 
   const toEndOfDayISO = (date) => dayjs(date).endOf("day").toISOString();
@@ -122,7 +130,8 @@ const HomePage = () => {
         },
         body: JSON.stringify({
           start: startDate.toISOString(),
-          end: endDate.toISOString()
+          end: endDate.toISOString(),
+          status: status
         })
       })
       
@@ -137,7 +146,7 @@ const HomePage = () => {
     } catch (error) {
       console.log(error)
     }
-  },[ startDate, endDate])
+  },[ startDate, endDate, status])
 
   useEffect(()=> {
     fetchApi(startDate.toISOString(), endDate.toISOString())
@@ -197,6 +206,22 @@ const HomePage = () => {
                   <Field.Error />
                   <Field.Hint />
                 </Field.Root>
+                <Field.Root
+                  id="filter"
+                >
+                  <Field.Label>Filter Status Export</Field.Label>
+                  <SingleSelect withTags value={status} onChange={handleStatus}>
+                    <SingleSelectOption value="all">All Status</SingleSelectOption>
+                    <SingleSelectOption value="0">Pending</SingleSelectOption>
+                    <SingleSelectOption value="1">Paid</SingleSelectOption>
+                    <SingleSelectOption value="2">Shipped</SingleSelectOption>
+                    <SingleSelectOption value="3">Canceled</SingleSelectOption>
+                    <SingleSelectOption value="4">Expired</SingleSelectOption>
+                    <SingleSelectOption value="5">Canceled admin</SingleSelectOption>
+                  </SingleSelect>
+                  <Field.Error />
+                  <Field.Hint />
+                </Field.Root>
               </Flex>
               <Flex gap={3} marginTop={2}>
                 <Button onClick={handleExport} variant="secondary" fullWidth>Export Orders</Button>
@@ -208,7 +233,7 @@ const HomePage = () => {
         <Grid.Root marginTop={5} marginBottom gap={3}>
           <Grid.Item alignItems={loading ? "center" : "start"} justifyContent={loading ? "center" : "flexStart"} direction="column" gap={5} col={9} background="neutral100">
             <Grid.Root gap={3} style={{ width: "100%"}}>
-              <Grid.Item col={4}>
+              <Grid.Item col={3}>
                 <Card style={{ width: "100%"}}>
                   <CardHeader>
                     <CardTitle padding={2}>
@@ -222,7 +247,7 @@ const HomePage = () => {
                   </CardBody>
                 </Card>
               </Grid.Item>
-              <Grid.Item col={4}>
+              <Grid.Item col={3}>
                 <Card style={{ width: "100%"}}>
                   <CardHeader>
                     <CardTitle padding={2}>
@@ -236,7 +261,21 @@ const HomePage = () => {
                   </CardBody>
                 </Card>
               </Grid.Item>
-              <Grid.Item col={4}>
+              <Grid.Item col={3}>
+                <Card style={{ width: "100%"}}>
+                  <CardHeader>
+                    <CardTitle padding={2}>
+                    <Typography variant="delta">Order Shipped</Typography>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardBody style={{ alignItems: "center", justifyContent: "center"}}>
+                    <CardContent>
+                    <Typography variant="delta">{countShippedOrder}</Typography>
+                    </CardContent>
+                  </CardBody>
+                </Card>
+              </Grid.Item>
+              <Grid.Item col={3}>
                 <Card style={{ width: "100%"}}>
                   <CardHeader>
                     <CardTitle padding={2}>
