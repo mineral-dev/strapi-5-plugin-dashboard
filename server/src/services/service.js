@@ -262,6 +262,7 @@ const service = ({ strapi }) => ({
               shipping_total_weight: order.shipping_total_weight +' kg',
               product_sku: orderItem.sku,
               product_name: orderItem.name,
+              product_variants: (orderItem.options || []).map(item => item?.option?.name).join("/"),
               product_regular_price: orderItem.regular_price,
               product_sale_price: orderItem.sale_price,
               product_qty: orderItem.qty,

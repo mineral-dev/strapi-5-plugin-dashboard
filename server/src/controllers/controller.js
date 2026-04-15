@@ -27,7 +27,7 @@ const controller = ({ strapi }) => ({
         .plugin('strapi-5-plugin-dashboard')
         .service('service')
         .exportOrders({ start, end });
-      console.log(entry_order)
+      // console.log(entry_order)
       const worksheet = XLSX.utils.json_to_sheet(entry_order);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Order');

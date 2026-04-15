@@ -34,7 +34,6 @@ const controller = ({ strapi }) => ({
     const { start, end } = ctx.request.body;
     try {
       const entry_order = await strapi.plugin("strapi-5-plugin-dashboard").service("service").exportOrders({ start, end });
-      console.log(entry_order);
       const worksheet = XLSX.utils.json_to_sheet(entry_order);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Order");
@@ -354,6 +353,7 @@ const service = ({ strapi }) => ({
               shipping_total_weight: order.shipping_total_weight + " kg",
               product_sku: orderItem.sku,
               product_name: orderItem.name,
+              product_variants: (orderItem.options || []).map((item) => item?.option?.name).join("/"),
               product_regular_price: orderItem.regular_price,
               product_sale_price: orderItem.sale_price,
               product_qty: orderItem.qty,
