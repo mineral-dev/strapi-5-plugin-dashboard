@@ -402,6 +402,7 @@ const service = ({ strapi }) => ({
               promo_code: order.promo_code,
               discount: order.discount,
               paid_at: order.paid_at ? dayjs__default.default(order.paid_at).format("YYYY-MM-DD HH:mm:ss") : "",
+              shipped_at: order.shipped_at ? dayjs__default.default(order.shipped_at).format("YYYY-MM-DD HH:mm:ss") : Number(order?.order_status) === 2 ? dayjs__default.default(order?.updated_at).format("YYYY-MM-DD HH:mm:ss") : "",
               total: order.total,
               grand_total: order.grand_total
             });
