@@ -276,7 +276,7 @@ const service = ({ strapi }) => ({
         }
       })
       if(!entry_order || entry_order.length === 0) return []
-
+      // console.log({ entry_order })
       for (const order of entry_order) {
         if(order.order_item.length > 0) {
           for (const orderItem of order.order_item) {
@@ -313,7 +313,7 @@ const service = ({ strapi }) => ({
               promo_code: order.promo_code,
               discount: order.discount,
               paid_at: order.paid_at ? dayjs(order.paid_at).format('YYYY-MM-DD HH:mm:ss') : '',
-              shipped_at: order.shipped_at  ? dayjs(order.shipped_at).format('YYYY-MM-DD HH:mm:ss') : Number(order?.order_status) === 2 ? dayjs(order?.updated_at).format('YYYY-MM-DD HH:mm:ss') : '',
+              shipped_at: order.shipped_at  ? dayjs(order.shipped_at).format('YYYY-MM-DD HH:mm:ss') : Number(order?.order_status) === 2 ? dayjs(order?.updatedAt).format('YYYY-MM-DD HH:mm:ss') : '',
               total: order.total,
               grand_total: order.grand_total,
             })
