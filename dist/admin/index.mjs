@@ -36,7 +36,7 @@ const index = {
         defaultMessage: "Dashboard"
       },
       Component: async () => {
-        const { App } = await import("../_chunks/App-OP3XItDS.mjs");
+        const { App } = await import("../_chunks/App-CSJGXtsQ.mjs");
         return App;
       }
     });
@@ -63,4 +63,3 @@ const index = {
 export {
   index as default
 };
-//# sourceMappingURL=index.mjs.map

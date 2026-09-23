@@ -319,7 +319,7 @@ const HomePage = () => {
                   {
                     (lastOrders && lastOrders.length > 0 )&&
                     lastOrders.map((item, i)=> (
-                      <OrderItem key={i} orderId={item.order_id} status={item.order_status} createdAt={item.createdAt} />
+                      <OrderItem key={i} orderId={item.order_id} status={item.order_status} createdAt={item.createdAt} is_po={item.is_po} />
                     ))
                   }
                   {

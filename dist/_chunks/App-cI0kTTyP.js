@@ -6,14 +6,16 @@ const reactRouterDom = require("react-router-dom");
 const designSystem = require("@strapi/design-system");
 const chart_js = require("chart.js");
 const dayjs = require("dayjs");
+const utc = require("dayjs/plugin/utc");
 const react = require("react");
 const reactChartjs2 = require("react-chartjs-2");
 const reactIntl = require("react-intl");
 const currencies = require("currency-formatter");
 const _interopDefault = (e) => e && e.__esModule ? e : { default: e };
 const dayjs__default = /* @__PURE__ */ _interopDefault(dayjs);
+const utc__default = /* @__PURE__ */ _interopDefault(utc);
 const currencies__default = /* @__PURE__ */ _interopDefault(currencies);
-function OrderItem({ orderId, createdAt, status }) {
+function OrderItem({ orderId, createdAt, status, is_po }) {
   const getStatus = (data = 0) => {
     const data_status = {
       0: "Pending",
@@ -27,8 +29,11 @@ function OrderItem({ orderId, createdAt, status }) {
     return data_status[data];
   };
   return /* @__PURE__ */ jsxRuntime.jsx(designSystem.Flex, { margin: 2, style: { width: "100%" }, children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Card, { style: { width: "100%" }, children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardBody, { children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.CardContent, { style: { width: "100%" }, children: [
-    /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Flex, { justifyContent: "space-between", children: [
-      /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "omega", children: orderId }),
+    /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Flex, { justifyContent: "space-between", alignItems: "center", children: [
+      /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Flex, { gap: 2, alignItems: "center", children: [
+        /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "omega", children: orderId }),
+        is_po && /* @__PURE__ */ jsxRuntime.jsx(designSystem.Badge, { variant: "warning", size: "S", children: "PO" })
+      ] }),
       /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, { variant: "secondary", children: getStatus(status) })
     ] }),
     /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "pi", children: dayjs__default.default(createdAt).format("DD MMM YYYY") })
@@ -47,6 +52,7 @@ const money = (data = 0) => {
     format: "%s %v"
   });
 };
+dayjs__default.default.extend(utc__default.default);
 chart_js.Chart.register(
   chart_js.LinearScale,
   chart_js.CategoryScale,
@@ -60,13 +66,15 @@ chart_js.Chart.register(
 );
 const HomePage = () => {
   const { formatMessage } = reactIntl.useIntl();
-  const [startDate, setStartDate] = react.useState(dayjs__default.default().subtract(7, "day").toDate());
-  const [endDate, setEndDate] = react.useState(dayjs__default.default().toDate());
+  const [startDate, setStartDate] = react.useState(dayjs__default.default().subtract(7, "day").startOf("day").toDate());
+  const [endDate, setEndDate] = react.useState(dayjs__default.default().endOf("day").toDate());
+  const [status, setStatus] = react.useState("all");
   const [chart, setChart] = react.useState(null);
   const [sales, setSales] = react.useState(0);
   const [countOrder, setCountOrder] = react.useState(0);
   const [countPaidOrder, setCountPaidOrder] = react.useState(0);
   const [countPendingOrder, setCountPendingOrder] = react.useState(0);
+  const [countShippedOrder, setCountShippedOrder] = react.useState(0);
   const [countExpiredOrder, setCountExpiredOrder] = react.useState(0);
   const [loading, setLoading] = react.useState(false);
   const [loadingOrders, setLoadingOrders] = react.useState(false);
@@ -81,6 +89,7 @@ const HomePage = () => {
         setCountOrder(responseJson.orders);
         setCountPaidOrder(responseJson.orders_paid);
         setCountPendingOrder(responseJson.orders_pending);
+        setCountShippedOrder(responseJson.orders_shipped);
         setCountExpiredOrder(responseJson.orders_expired);
         setSales(responseJson.sales);
         setLoading(false);
@@ -104,16 +113,23 @@ const HomePage = () => {
       setLoadingOrders(false);
     }
   };
+  const normalizeDate = (date) => {
+    if (!date) return null;
+    return dayjs__default.default(date).hour(12).minute(0).second(0).millisecond(0).toDate();
+  };
   const handleStart = (value) => {
-    console.log("value start", value);
-    setStartDate(dayjs__default.default(value).toDate());
+    setStartDate(normalizeDate(value));
   };
   const handleEnd = (value) => {
-    console.log("value end", value);
-    setEndDate(dayjs__default.default(value).toDate());
+    setEndDate(normalizeDate(value));
   };
+  const handleStatus = (value) => {
+    setStatus(value);
+  };
+  const toStartOfDayISO = (date) => dayjs__default.default(date).startOf("day").toISOString();
+  const toEndOfDayISO = (date) => dayjs__default.default(date).endOf("day").toISOString();
   const handleApply = react.useCallback(() => {
-    fetchApi(startDate, endDate);
+    fetchApi(toStartOfDayISO(startDate), toEndOfDayISO(endDate));
   }, [startDate, endDate]);
   const handleExport = react.useCallback(async () => {
     try {
@@ -124,7 +140,8 @@ const HomePage = () => {
         },
         body: JSON.stringify({
           start: startDate.toISOString(),
-          end: endDate.toISOString()
+          end: endDate.toISOString(),
+          status
         })
       });
       const result = await response.blob();
@@ -138,7 +155,7 @@ const HomePage = () => {
     } catch (error) {
       console.log(error);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, status]);
   react.useEffect(() => {
     fetchApi(startDate.toISOString(), endDate.toISOString());
     fetchOrder();
@@ -180,6 +197,26 @@ const HomePage = () => {
                 /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Hint, {})
               ]
             }
+          ),
+          /* @__PURE__ */ jsxRuntime.jsxs(
+            designSystem.Field.Root,
+            {
+              id: "filter",
+              children: [
+                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Label, { children: "Filter Status Export" }),
+                /* @__PURE__ */ jsxRuntime.jsxs(designSystem.SingleSelect, { withTags: true, value: status, onChange: handleStatus, children: [
+                  /* @__PURE__ */ jsxRuntime.jsx(designSystem.SingleSelectOption, { value: "all", children: "All Status" }),
+                  /* @__PURE__ */ jsxRuntime.jsx(designSystem.SingleSelectOption, { value: "0", children: "Pending" }),
+                  /* @__PURE__ */ jsxRuntime.jsx(designSystem.SingleSelectOption, { value: "1", children: "Paid" }),
+                  /* @__PURE__ */ jsxRuntime.jsx(designSystem.SingleSelectOption, { value: "2", children: "Shipped" }),
+                  /* @__PURE__ */ jsxRuntime.jsx(designSystem.SingleSelectOption, { value: "3", children: "Canceled" }),
+                  /* @__PURE__ */ jsxRuntime.jsx(designSystem.SingleSelectOption, { value: "4", children: "Expired" }),
+                  /* @__PURE__ */ jsxRuntime.jsx(designSystem.SingleSelectOption, { value: "5", children: "Canceled admin" })
+                ] }),
+                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Error, {}),
+                /* @__PURE__ */ jsxRuntime.jsx(designSystem.Field.Hint, {})
+              ]
+            }
           )
         ] }),
         /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Flex, { gap: 3, marginTop: 2, children: [
@@ -191,15 +228,19 @@ const HomePage = () => {
     /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Grid.Root, { marginTop: 5, marginBottom: true, gap: 3, children: [
       /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Grid.Item, { alignItems: loading ? "center" : "start", justifyContent: loading ? "center" : "flexStart", direction: "column", gap: 5, col: 9, background: "neutral100", children: [
         /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Grid.Root, { gap: 3, style: { width: "100%" }, children: [
-          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Grid.Item, { col: 4, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Card, { style: { width: "100%" }, children: [
+          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Grid.Item, { col: 3, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Card, { style: { width: "100%" }, children: [
             /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardHeader, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardTitle, { padding: 2, children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "delta", children: "Order Pending" }) }) }),
             /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardBody, { style: { alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardContent, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "delta", children: countPendingOrder }) }) })
           ] }) }),
-          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Grid.Item, { col: 4, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Card, { style: { width: "100%" }, children: [
+          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Grid.Item, { col: 3, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Card, { style: { width: "100%" }, children: [
             /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardHeader, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardTitle, { padding: 2, children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "delta", children: "Order Paid" }) }) }),
             /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardBody, { style: { alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardContent, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "delta", children: countPaidOrder }) }) })
           ] }) }),
-          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Grid.Item, { col: 4, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Card, { style: { width: "100%" }, children: [
+          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Grid.Item, { col: 3, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Card, { style: { width: "100%" }, children: [
+            /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardHeader, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardTitle, { padding: 2, children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "delta", children: "Order Shipped" }) }) }),
+            /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardBody, { style: { alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardContent, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "delta", children: countShippedOrder }) }) })
+          ] }) }),
+          /* @__PURE__ */ jsxRuntime.jsx(designSystem.Grid.Item, { col: 3, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Card, { style: { width: "100%" }, children: [
             /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardHeader, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardTitle, { padding: 2, children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "delta", children: "Order Expired" }) }) }),
             /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardBody, { style: { alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardContent, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "delta", children: countExpiredOrder }) }) })
           ] }) })
@@ -212,7 +253,7 @@ const HomePage = () => {
         /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardHeader, { children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardTitle, { padding: 2, children: /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "delta", children: "Last Orders" }) }) }),
         /* @__PURE__ */ jsxRuntime.jsx(designSystem.CardContent, { style: { flexGrow: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: loadingOrders ? "center" : "flex-start", gap: 5, overflowY: "scroll" }, children: /* @__PURE__ */ jsxRuntime.jsxs(designSystem.Flex, { direction: "column", style: { width: "100%", paddingLeft: 8, paddingRight: 8 }, children: [
           loadingOrders && /* @__PURE__ */ jsxRuntime.jsx(designSystem.Button, { loading: loadingOrders }),
-          lastOrders && lastOrders.length > 0 && lastOrders.map((item, i) => /* @__PURE__ */ jsxRuntime.jsx(OrderItem, { orderId: item.order_id, status: item.order_status, createdAt: item.createdAt }, i)),
+          lastOrders && lastOrders.length > 0 && lastOrders.map((item, i) => /* @__PURE__ */ jsxRuntime.jsx(OrderItem, { orderId: item.order_id, status: item.order_status, createdAt: item.createdAt, is_po: item.is_po }, i)),
           (!lastOrders || lastOrders.length === 0) && /* @__PURE__ */ jsxRuntime.jsx(designSystem.Typography, { variant: "delta", children: "Empty" })
         ] }) })
       ] }) })
@@ -226,4 +267,3 @@ const App = () => {
   ] });
 };
 exports.App = App;
-//# sourceMappingURL=App-x2CgWx4u.js.map

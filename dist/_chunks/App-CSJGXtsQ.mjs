@@ -1,7 +1,7 @@
 import { jsx, jsxs } from "react/jsx-runtime";
 import { Page } from "@strapi/strapi/admin";
 import { Routes, Route } from "react-router-dom";
-import { Flex, Card, CardBody, CardContent, Typography, Button, Main, Box, Grid, CardHeader, CardTitle, Field, DatePicker } from "@strapi/design-system";
+import { Flex, Card, CardBody, CardContent, Typography, Badge, Button, Main, Box, Grid, CardHeader, CardTitle, Field, DatePicker, SingleSelect, SingleSelectOption } from "@strapi/design-system";
 import { Chart as Chart$1, LinearScale, CategoryScale, BarElement, PointElement, LineElement, Legend, Tooltip, LineController, BarController } from "chart.js";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -9,7 +9,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Chart } from "react-chartjs-2";
 import { useIntl } from "react-intl";
 import currencies from "currency-formatter";
-function OrderItem({ orderId, createdAt, status }) {
+function OrderItem({ orderId, createdAt, status, is_po }) {
   const getStatus = (data = 0) => {
     const data_status = {
       0: "Pending",
@@ -23,8 +23,11 @@ function OrderItem({ orderId, createdAt, status }) {
     return data_status[data];
   };
   return /* @__PURE__ */ jsx(Flex, { margin: 2, style: { width: "100%" }, children: /* @__PURE__ */ jsx(Card, { style: { width: "100%" }, children: /* @__PURE__ */ jsx(CardBody, { children: /* @__PURE__ */ jsxs(CardContent, { style: { width: "100%" }, children: [
-    /* @__PURE__ */ jsxs(Flex, { justifyContent: "space-between", children: [
-      /* @__PURE__ */ jsx(Typography, { variant: "omega", children: orderId }),
+    /* @__PURE__ */ jsxs(Flex, { justifyContent: "space-between", alignItems: "center", children: [
+      /* @__PURE__ */ jsxs(Flex, { gap: 2, alignItems: "center", children: [
+        /* @__PURE__ */ jsx(Typography, { variant: "omega", children: orderId }),
+        is_po && /* @__PURE__ */ jsx(Badge, { variant: "warning", size: "S", children: "PO" })
+      ] }),
       /* @__PURE__ */ jsx(Button, { variant: "secondary", children: getStatus(status) })
     ] }),
     /* @__PURE__ */ jsx(Typography, { variant: "pi", children: dayjs(createdAt).format("DD MMM YYYY") })
@@ -57,13 +60,15 @@ Chart$1.register(
 );
 const HomePage = () => {
   const { formatMessage } = useIntl();
-  const [startDate, setStartDate] = useState(dayjs().subtract(7, "day").toDate());
-  const [endDate, setEndDate] = useState(dayjs().toDate());
+  const [startDate, setStartDate] = useState(dayjs().subtract(7, "day").startOf("day").toDate());
+  const [endDate, setEndDate] = useState(dayjs().endOf("day").toDate());
+  const [status, setStatus] = useState("all");
   const [chart, setChart] = useState(null);
   const [sales, setSales] = useState(0);
   const [countOrder, setCountOrder] = useState(0);
   const [countPaidOrder, setCountPaidOrder] = useState(0);
   const [countPendingOrder, setCountPendingOrder] = useState(0);
+  const [countShippedOrder, setCountShippedOrder] = useState(0);
   const [countExpiredOrder, setCountExpiredOrder] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -78,6 +83,7 @@ const HomePage = () => {
         setCountOrder(responseJson.orders);
         setCountPaidOrder(responseJson.orders_paid);
         setCountPendingOrder(responseJson.orders_pending);
+        setCountShippedOrder(responseJson.orders_shipped);
         setCountExpiredOrder(responseJson.orders_expired);
         setSales(responseJson.sales);
         setLoading(false);
@@ -101,16 +107,23 @@ const HomePage = () => {
       setLoadingOrders(false);
     }
   };
+  const normalizeDate = (date) => {
+    if (!date) return null;
+    return dayjs(date).hour(12).minute(0).second(0).millisecond(0).toDate();
+  };
   const handleStart = (value) => {
-    console.log("value start", value);
-    setStartDate(dayjs(value).format("YYYY-MM-DD"));
+    setStartDate(normalizeDate(value));
   };
   const handleEnd = (value) => {
-    console.log("value end", value);
-    setEndDate(dayjs(value).format("YYYY-MM-DD"));
+    setEndDate(normalizeDate(value));
   };
+  const handleStatus = (value) => {
+    setStatus(value);
+  };
+  const toStartOfDayISO = (date) => dayjs(date).startOf("day").toISOString();
+  const toEndOfDayISO = (date) => dayjs(date).endOf("day").toISOString();
   const handleApply = useCallback(() => {
-    fetchApi(startDate, endDate);
+    fetchApi(toStartOfDayISO(startDate), toEndOfDayISO(endDate));
   }, [startDate, endDate]);
   const handleExport = useCallback(async () => {
     try {
@@ -121,7 +134,8 @@ const HomePage = () => {
         },
         body: JSON.stringify({
           start: startDate.toISOString(),
-          end: endDate.toISOString()
+          end: endDate.toISOString(),
+          status
         })
       });
       const result = await response.blob();
@@ -135,12 +149,11 @@ const HomePage = () => {
     } catch (error) {
       console.log(error);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, status]);
   useEffect(() => {
     fetchApi(startDate.toISOString(), endDate.toISOString());
     fetchOrder();
   }, []);
-  console.log("chart data", startDate, endDate);
   return /* @__PURE__ */ jsx(Main, { children: /* @__PURE__ */ jsxs(Box, { direction: "column", marginTop: 7, marginLeft: 5, marginRight: 5, marginBottom: 7, children: [
     /* @__PURE__ */ jsx(Typography, { variant: "alpha", children: "Dashboard" }),
     /* @__PURE__ */ jsxs(Grid.Root, { marginTop: 3, marginBottom: true, gap: 3, children: [
@@ -178,6 +191,26 @@ const HomePage = () => {
                 /* @__PURE__ */ jsx(Field.Hint, {})
               ]
             }
+          ),
+          /* @__PURE__ */ jsxs(
+            Field.Root,
+            {
+              id: "filter",
+              children: [
+                /* @__PURE__ */ jsx(Field.Label, { children: "Filter Status Export" }),
+                /* @__PURE__ */ jsxs(SingleSelect, { withTags: true, value: status, onChange: handleStatus, children: [
+                  /* @__PURE__ */ jsx(SingleSelectOption, { value: "all", children: "All Status" }),
+                  /* @__PURE__ */ jsx(SingleSelectOption, { value: "0", children: "Pending" }),
+                  /* @__PURE__ */ jsx(SingleSelectOption, { value: "1", children: "Paid" }),
+                  /* @__PURE__ */ jsx(SingleSelectOption, { value: "2", children: "Shipped" }),
+                  /* @__PURE__ */ jsx(SingleSelectOption, { value: "3", children: "Canceled" }),
+                  /* @__PURE__ */ jsx(SingleSelectOption, { value: "4", children: "Expired" }),
+                  /* @__PURE__ */ jsx(SingleSelectOption, { value: "5", children: "Canceled admin" })
+                ] }),
+                /* @__PURE__ */ jsx(Field.Error, {}),
+                /* @__PURE__ */ jsx(Field.Hint, {})
+              ]
+            }
           )
         ] }),
         /* @__PURE__ */ jsxs(Flex, { gap: 3, marginTop: 2, children: [
@@ -189,15 +222,19 @@ const HomePage = () => {
     /* @__PURE__ */ jsxs(Grid.Root, { marginTop: 5, marginBottom: true, gap: 3, children: [
       /* @__PURE__ */ jsxs(Grid.Item, { alignItems: loading ? "center" : "start", justifyContent: loading ? "center" : "flexStart", direction: "column", gap: 5, col: 9, background: "neutral100", children: [
         /* @__PURE__ */ jsxs(Grid.Root, { gap: 3, style: { width: "100%" }, children: [
-          /* @__PURE__ */ jsx(Grid.Item, { col: 4, children: /* @__PURE__ */ jsxs(Card, { style: { width: "100%" }, children: [
+          /* @__PURE__ */ jsx(Grid.Item, { col: 3, children: /* @__PURE__ */ jsxs(Card, { style: { width: "100%" }, children: [
             /* @__PURE__ */ jsx(CardHeader, { children: /* @__PURE__ */ jsx(CardTitle, { padding: 2, children: /* @__PURE__ */ jsx(Typography, { variant: "delta", children: "Order Pending" }) }) }),
             /* @__PURE__ */ jsx(CardBody, { style: { alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx(CardContent, { children: /* @__PURE__ */ jsx(Typography, { variant: "delta", children: countPendingOrder }) }) })
           ] }) }),
-          /* @__PURE__ */ jsx(Grid.Item, { col: 4, children: /* @__PURE__ */ jsxs(Card, { style: { width: "100%" }, children: [
+          /* @__PURE__ */ jsx(Grid.Item, { col: 3, children: /* @__PURE__ */ jsxs(Card, { style: { width: "100%" }, children: [
             /* @__PURE__ */ jsx(CardHeader, { children: /* @__PURE__ */ jsx(CardTitle, { padding: 2, children: /* @__PURE__ */ jsx(Typography, { variant: "delta", children: "Order Paid" }) }) }),
             /* @__PURE__ */ jsx(CardBody, { style: { alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx(CardContent, { children: /* @__PURE__ */ jsx(Typography, { variant: "delta", children: countPaidOrder }) }) })
           ] }) }),
-          /* @__PURE__ */ jsx(Grid.Item, { col: 4, children: /* @__PURE__ */ jsxs(Card, { style: { width: "100%" }, children: [
+          /* @__PURE__ */ jsx(Grid.Item, { col: 3, children: /* @__PURE__ */ jsxs(Card, { style: { width: "100%" }, children: [
+            /* @__PURE__ */ jsx(CardHeader, { children: /* @__PURE__ */ jsx(CardTitle, { padding: 2, children: /* @__PURE__ */ jsx(Typography, { variant: "delta", children: "Order Shipped" }) }) }),
+            /* @__PURE__ */ jsx(CardBody, { style: { alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx(CardContent, { children: /* @__PURE__ */ jsx(Typography, { variant: "delta", children: countShippedOrder }) }) })
+          ] }) }),
+          /* @__PURE__ */ jsx(Grid.Item, { col: 3, children: /* @__PURE__ */ jsxs(Card, { style: { width: "100%" }, children: [
             /* @__PURE__ */ jsx(CardHeader, { children: /* @__PURE__ */ jsx(CardTitle, { padding: 2, children: /* @__PURE__ */ jsx(Typography, { variant: "delta", children: "Order Expired" }) }) }),
             /* @__PURE__ */ jsx(CardBody, { style: { alignItems: "center", justifyContent: "center" }, children: /* @__PURE__ */ jsx(CardContent, { children: /* @__PURE__ */ jsx(Typography, { variant: "delta", children: countExpiredOrder }) }) })
           ] }) })
@@ -210,7 +247,7 @@ const HomePage = () => {
         /* @__PURE__ */ jsx(CardHeader, { children: /* @__PURE__ */ jsx(CardTitle, { padding: 2, children: /* @__PURE__ */ jsx(Typography, { variant: "delta", children: "Last Orders" }) }) }),
         /* @__PURE__ */ jsx(CardContent, { style: { flexGrow: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: loadingOrders ? "center" : "flex-start", gap: 5, overflowY: "scroll" }, children: /* @__PURE__ */ jsxs(Flex, { direction: "column", style: { width: "100%", paddingLeft: 8, paddingRight: 8 }, children: [
           loadingOrders && /* @__PURE__ */ jsx(Button, { loading: loadingOrders }),
-          lastOrders && lastOrders.length > 0 && lastOrders.map((item, i) => /* @__PURE__ */ jsx(OrderItem, { orderId: item.order_id, status: item.order_status, createdAt: item.createdAt }, i)),
+          lastOrders && lastOrders.length > 0 && lastOrders.map((item, i) => /* @__PURE__ */ jsx(OrderItem, { orderId: item.order_id, status: item.order_status, createdAt: item.createdAt, is_po: item.is_po }, i)),
           (!lastOrders || lastOrders.length === 0) && /* @__PURE__ */ jsx(Typography, { variant: "delta", children: "Empty" })
         ] }) })
       ] }) })
@@ -226,4 +263,3 @@ const App = () => {
 export {
   App
 };
-//# sourceMappingURL=App-2hqwPR8M.mjs.map

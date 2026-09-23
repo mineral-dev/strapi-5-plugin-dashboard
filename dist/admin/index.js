@@ -37,7 +37,7 @@ const index = {
         defaultMessage: "Dashboard"
       },
       Component: async () => {
-        const { App } = await Promise.resolve().then(() => require("../_chunks/App-C0XojRdn.js"));
+        const { App } = await Promise.resolve().then(() => require("../_chunks/App-cI0kTTyP.js"));
         return App;
       }
     });
@@ -62,4 +62,3 @@ const index = {
   }
 };
 module.exports = index;
-//# sourceMappingURL=index.js.map

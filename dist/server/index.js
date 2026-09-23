@@ -51,7 +51,7 @@ const controller = ({ strapi }) => ({
         sort: "createdAt:desc",
         limit: 10,
         start: 0,
-        fields: ["order_id", "order_status", "createdAt"]
+        fields: ["order_id", "order_status", "createdAt", "is_po"]
       });
     } catch (error) {
       ctx.send({ message: error.message }, 500);
@@ -373,6 +373,7 @@ const service = ({ strapi }) => ({
               order_id: order.order_id,
               uuid: order.uuid,
               order_status: getStatus(order.order_status),
+              is_po: order.is_po ? "Pre-Order" : "Ready Stock",
               name: order.name,
               email: order.email,
               address: order.address,
@@ -392,6 +393,7 @@ const service = ({ strapi }) => ({
               shipping_total_weight: order.shipping_total_weight + " kg",
               product_sku: orderItem.sku,
               product_name: orderItem.name,
+              product_is_po: orderItem.is_po ? "Pre-Order" : "Ready Stock",
               product_variants: (orderItem.options || []).map((item) => item?.option?.name).join("/"),
               product_regular_price: orderItem.regular_price,
               product_sale_price: orderItem.sale_price,
@@ -443,4 +445,3 @@ const index = {
   services
 };
 module.exports = index;
-//# sourceMappingURL=index.js.map

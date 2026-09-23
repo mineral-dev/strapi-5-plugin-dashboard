@@ -1,7 +1,7 @@
-import { Button, Card, CardBody, CardContent, Flex, Typography } from '@strapi/design-system';
+import { Badge, Button, Card, CardBody, CardContent, Flex, Typography } from '@strapi/design-system';
 import dayjs from 'dayjs';
 
-export default function OrderItem({ orderId, createdAt, status }) {
+export default function OrderItem({ orderId, createdAt, status, is_po }) {
    const getStatus = (data = 0) => {
       const data_status = {
          0: 'Pending',
@@ -20,8 +20,11 @@ export default function OrderItem({ orderId, createdAt, status }) {
          <Card style={{ width: "100%"}}>
             <CardBody>
                <CardContent style={{ width: '100%'}}>
-                  <Flex justifyContent="space-between">
-                     <Typography variant="omega">{orderId}</Typography>
+                  <Flex justifyContent="space-between" alignItems="center">
+                     <Flex gap={2} alignItems="center">
+                        <Typography variant="omega">{orderId}</Typography>
+                        {is_po && <Badge variant="warning" size="S">PO</Badge>}
+                     </Flex>
                      <Button variant="secondary">{getStatus(status)}</Button>
                   </Flex>
                   <Typography variant="pi">{dayjs(createdAt).format("DD MMM YYYY")}</Typography>
